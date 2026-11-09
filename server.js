@@ -7,8 +7,8 @@ const server = http.createServer(app);
 const io = new Server(server);
 app.use(express.static('public'));
 
-const CLAVE = process.env.CLAVE || 'ases'; // contraseña del conductor
-const TIEMPO = 20000; // 20 segundos por pregunta
+const CLAVE = process.env.CLAVE || 'ases';
+const TIEMPO = 15000; // 15 segundos por pregunta
 
 const PREGUNTAS = [
   { q: '¿Cuál es el planeta más grande?', o: ['Marte', 'Júpiter', 'Saturno', 'Tierra'], c: 1 },
@@ -32,6 +32,7 @@ function publico() {
   const q = PREGUNTAS[s.qi];
   return {
     fase: s.fase, qi: s.qi, total: PREGUNTAS.length, abierta: s.abierta,
+    restante: s.abierta ? Math.max(0, TIEMPO - (Date.now() - s.t0)) : 0,
     pregunta: q ? { q: q.q, o: q.o } : null,
     correcta: q && !s.abierta ? q.c : null,
     respondieron: Object.keys(s.resp).length,
@@ -47,8 +48,6 @@ function publico() {
 }
 const avisar = () => io.emit('estado', publico());
 
-function cerrar() { s.abierta = false; avisar(); }
-
 io.on('connection', sock => {
   sock.emit('estado', publico());
 
@@ -62,7 +61,7 @@ io.on('connection', sock => {
     if (!s.abierta || !s.jug[id] || s.resp[id] !== undefined) return;
     s.resp[id] = op;
     if (op === PREGUNTAS[s.qi].c) {
-      const t = Date.now() - s.t0; // más rápido = más puntos
+      const t = Date.now() - s.t0;
       s.jug[id].pts += Math.max(500, Math.round(1000 - (t / TIEMPO) * 500));
     }
     avisar();
@@ -80,7 +79,7 @@ io.on('connection', sock => {
     if (acc === 'siguiente' && s.qi < PREGUNTAS.length - 1) {
       s.fase = 'preguntas'; s.qi++; s.abierta = true; s.resp = {}; s.t0 = Date.now();
       const esta = s.qi;
-      setTimeout(() => { if (s.qi === esta && s.abierta) cerrar(); }, TIEMPO);
+      setTimeout(() => { if (s.qi === esta && s.abierta) { s.abierta = false; avisar(); } }, TIEMPO);
     }
     if (acc === 'cerrar') s.abierta = false;
     if (acc === 'clasificar') {
