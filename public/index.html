@@ -1,17 +1,20 @@
 <!doctype html>
 <html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>El Rival Más Débil</title>
+<title>La AC Más Débil</title>
 <style>
   body{margin:0;font-family:system-ui,sans-serif;background:#0a1220;color:#eef3fb;text-align:center;padding:20px}
   h1{color:#e8323c;margin:10px 0 20px}
+  .logo{max-height:80px;display:block;margin:0 auto 8px}
   input,button{font-size:1.2rem;padding:14px;border-radius:10px;border:0;width:100%;margin:6px 0}
   .op{color:#fff;font-weight:700}
   .o0{background:#e8323c}.o1{background:#2f8fd8}.o2{background:#e9a91f}.o3{background:#3cae74}
   .gris{background:#24365a;color:#eef3fb}
   .msg{font-size:1.3rem;margin:30px 0}
+  #crono{font-size:2.5rem;font-weight:800;color:#9fd8ff}
 </style></head><body>
-<h1>El Rival Más Débil</h1>
+<img class="logo" src="/logo.png" alt="" onerror="this.remove()">
+<h1>La AC Más Débil</h1>
 <div id="app"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
@@ -19,13 +22,19 @@ const sock = io();
 let id = localStorage.getItem('rmd-id');
 if (!id) { id = Math.random().toString(36).slice(2); localStorage.setItem('rmd-id', id); }
 let nombre = localStorage.getItem('rmd-nombre');
-let miResp = {}, miVoto = null, st = null;
+let miResp = {}, miVoto = null, st = null, fin = 0;
 const app = document.getElementById('app');
 const esc = t => String(t).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
-if (nombre) sock.emit('unirse', { id, nombre });
 sock.on('connect', () => { if (nombre) sock.emit('unirse', { id, nombre }); });
-sock.on('estado', e => { if (st && st.fase !== 'voto' && e.fase === 'voto') miVoto = null; st = e; pintar(); });
+sock.on('estado', e => {
+  if (st && st.fase !== 'voto' && e.fase === 'voto') miVoto = null;
+  st = e; fin = Date.now() + (e.restante || 0); pintar();
+});
+setInterval(() => {
+  const c = document.getElementById('crono');
+  if (c) c.textContent = st && st.abierta ? Math.max(0, Math.ceil((fin - Date.now()) / 1000)) : '';
+}, 250);
 
 function pintar() {
   if (!nombre) {
@@ -37,19 +46,20 @@ function pintar() {
     };
     return;
   }
+  if (!st) return;
   const yo = st.jugadores.find(j => j.id === id);
   const pts = yo ? yo.pts : 0;
   if (st.fase === 'espera') { app.innerHTML = `<p class="msg">¡Listo, ${esc(nombre)}! Espera la primera pregunta.</p>`; return; }
   if (st.fase === 'preguntas') {
     const r = miResp[st.qi];
     if (st.abierta && r === undefined) {
-      app.innerHTML = `<p>${st.qi + 1} de ${st.total}</p><h2>${esc(st.pregunta.q)}</h2>` +
+      app.innerHTML = `<div id="crono"></div><p>${st.qi + 1} de ${st.total}</p><h2>${esc(st.pregunta.q)}</h2>` +
         st.pregunta.o.map((o, i) => `<button class="op o${i}" data-i="${i}">${esc(o)}</button>`).join('');
       app.querySelectorAll('[data-i]').forEach(b => b.onclick = () => {
         miResp[st.qi] = +b.dataset.i; sock.emit('responder', { id, op: +b.dataset.i }); pintar();
       });
     } else if (st.abierta) {
-      app.innerHTML = `<p class="msg">Respuesta enviada. Espera…</p>`;
+      app.innerHTML = `<div id="crono"></div><p class="msg">Respuesta enviada. Espera…</p>`;
     } else {
       const bien = r === st.correcta;
       app.innerHTML = `<p class="msg">${r === undefined ? 'No contestaste' : bien ? '✅ ¡Correcto!' : '❌ Incorrecto'}</p><p>Llevas ${pts} puntos</p>`;
@@ -70,4 +80,5 @@ function pintar() {
     });
   }
 }
+pintar();
 </script></body></html>
