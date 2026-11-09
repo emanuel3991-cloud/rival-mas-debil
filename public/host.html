@@ -1,10 +1,11 @@
 <!doctype html>
 <html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Conductor · El Rival Más Débil</title>
+<title>Conductor · La AC Más Débil</title>
 <style>
   body{margin:0;font-family:system-ui,sans-serif;background:#0a1220;color:#eef3fb;padding:24px}
-  h1{color:#e8323c;margin:0 0 16px}
+  h1{color:#e8323c;margin:0 0 16px;display:flex;align-items:center;gap:12px}
+  .logo{max-height:60px}
   button{font-size:1.1rem;padding:12px 18px;border-radius:8px;border:0;margin:4px;cursor:pointer;font-weight:700}
   .fila{display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start}
   .caja{background:#111d33;border:1px solid #24365a;border-radius:12px;padding:16px;flex:1;min-width:260px}
@@ -12,15 +13,16 @@
   .op{padding:10px;border-radius:8px;margin:6px 0;font-size:1.3rem}
   .ok{outline:4px solid #3fcf8e}
   li{font-size:1.2rem;margin:4px 0}
+  #crono{font-size:5rem;font-weight:800;color:#9fd8ff;line-height:1}
 </style></head><body>
-<h1>El Rival Más Débil · Conductor</h1>
+<h1><img class="logo" src="/logo.png" alt="" onerror="this.remove()">La AC Más Débil · Conductor</h1>
 <div id="login"><input id="clave" type="password" placeholder="Contraseña" style="font-size:1.2rem;padding:10px">
   <button id="entrar">Entrar</button></div>
 <div id="app" hidden></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
 const sock = io();
-let clave = '', st = null;
+let clave = '', st = null, fin = 0;
 const app = document.getElementById('app');
 const esc = t => String(t).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const enviar = (acc, n) => sock.emit('host', { clave, acc, n });
@@ -30,15 +32,20 @@ sock.on('clave', ok => {
   if (ok) { document.getElementById('login').hidden = true; app.hidden = false; pintar(); }
   else alert('Contraseña incorrecta');
 });
-sock.on('estado', e => { st = e; if (!app.hidden) pintar(); });
+sock.on('estado', e => { st = e; fin = Date.now() + (e.restante || 0); if (!app.hidden) pintar(); });
+setInterval(() => {
+  const c = document.getElementById('crono');
+  if (c) c.textContent = st && st.abierta ? Math.max(0, Math.ceil((fin - Date.now()) / 1000)) : '';
+}, 250);
 
 function pintar() {
+  if (!st) return;
   const url = location.origin;
   const qr = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=${encodeURIComponent(url)}`;
   const colores = ['#e8323c', '#2f8fd8', '#e9a91f', '#3cae74'];
   let centro = '';
   if (st.pregunta && st.fase === 'preguntas') {
-    centro = `<p>Pregunta ${st.qi + 1} de ${st.total} · ${st.respondieron} respuestas</p>
+    centro = `<div id="crono"></div><p>Pregunta ${st.qi + 1} de ${st.total} · ${st.respondieron} respuestas</p>
       <div class="q">${esc(st.pregunta.q)}</div>` +
       st.pregunta.o.map((o, i) => `<div class="op ${st.correcta === i ? 'ok' : ''}" style="background:${colores[i]}">${esc(o)}</div>`).join('');
   }
