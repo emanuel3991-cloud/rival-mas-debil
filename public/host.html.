@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Conductor · El Rival Más Débil</title>
+<style>
+  body{margin:0;font-family:system-ui,sans-serif;background:#0a1220;color:#eef3fb;padding:24px}
+  h1{color:#e8323c;margin:0 0 16px}
+  button{font-size:1.1rem;padding:12px 18px;border-radius:8px;border:0;margin:4px;cursor:pointer;font-weight:700}
+  .fila{display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start}
+  .caja{background:#111d33;border:1px solid #24365a;border-radius:12px;padding:16px;flex:1;min-width:260px}
+  .q{font-size:2rem;font-weight:700}
+  .op{padding:10px;border-radius:8px;margin:6px 0;font-size:1.3rem}
+  .ok{outline:4px solid #3fcf8e}
+  li{font-size:1.2rem;margin:4px 0}
+</style></head><body>
+<h1>El Rival Más Débil · Conductor</h1>
+<div id="login"><input id="clave" type="password" placeholder="Contraseña" style="font-size:1.2rem;padding:10px">
+  <button id="entrar">Entrar</button></div>
+<div id="app" hidden></div>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const sock = io();
+let clave = '', st = null;
+const app = document.getElementById('app');
+const esc = t => String(t).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const enviar = (acc, n) => sock.emit('host', { clave, acc, n });
+
+document.getElementById('entrar').onclick = () => { clave = document.getElementById('clave').value; enviar('nada'); };
+sock.on('clave', ok => {
+  if (ok) { document.getElementById('login').hidden = true; app.hidden = false; pintar(); }
+  else alert('Contraseña incorrecta');
+});
+sock.on('estado', e => { st = e; if (!app.hidden) pintar(); });
+
+function pintar() {
+  const url = location.origin;
+  const qr = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=${encodeURIComponent(url)}`;
+  const colores = ['#e8323c', '#2f8fd8', '#e9a91f', '#3cae74'];
+  let centro = '';
+  if (st.pregunta && st.fase === 'preguntas') {
+    centro = `<p>Pregunta ${st.qi + 1} de ${st.total} · ${st.respondieron} respuestas</p>
+      <div class="q">${esc(st.pregunta.q)}</div>` +
+      st.pregunta.o.map((o, i) => `<div class="op ${st.correcta === i ? 'ok' : ''}" style="background:${colores[i]}">${esc(o)}</div>`).join('');
+  }
+  if (st.fase === 'escenario' || st.fase === 'voto') {
+    centro = `<h2>${st.fase === 'voto' ? 'Votación abierta' : 'En el escenario'} (${st.cand.length})</h2><ol>` +
+      st.cand.slice().sort((a, b) => b.votos - a.votos)
+        .map(c => `<li>${esc(c.nombre)}${st.fase === 'voto' ? ` — ${c.votos} votos` : ''}</li>`).join('') + `</ol>` +
+      (st.fuera.length ? `<p>Eliminados: ${st.fuera.map(esc).join(', ')}</p>` : '');
+  }
+  app.innerHTML = `<div class="fila">
+    <div class="caja" style="flex:0 0 auto;text-align:center"><img src="${qr}" alt="QR" width="280" height="280"><p>${esc(url)}</p>
+      <p>${st.jugadores.length} conectados</p></div>
+    <div class="caja">${centro || '<p class="q">Escaneen el QR para entrar</p>'}</div>
+    <div class="caja"><h3>Top 15</h3><ol>${st.jugadores.slice(0, 15).map(j => `<li>${esc(j.nombre)} — ${j.pts}</li>`).join('')}</ol></div>
+  </div>
+  <div style="margin-top:16px">
+    <button data-a="siguiente">Siguiente pregunta</button>
+    <button data-a="cerrar">Cerrar y mostrar respuesta</button>
+    <button data-a="clasificar" style="background:#f2c94c">Pasar top 15 al escenario</button>
+    <button data-a="abrirVoto" style="background:#e8323c;color:#fff">Abrir votación</button>
+    <button data-a="eliminar">Eliminar al más votado</button>
+    <button data-a="reiniciar" style="background:#24365a;color:#fff">Reiniciar todo</button>
+  </div>`;
+  app.querySelectorAll('[data-a]').forEach(b => b.onclick = () => {
+    const a = b.dataset.a;
+    if (a === 'reiniciar' && !confirm('¿Borrar todo y empezar de cero?')) return;
+    enviar(a, 15);
+  });
+}
+</script></body></html>
