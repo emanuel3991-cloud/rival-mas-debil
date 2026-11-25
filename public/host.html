@@ -1,78 +1,81 @@
 <!doctype html>
 <html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Conductor · La AC Más Débil</title>
+<title>El Rival Más Débil</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;900&display=swap">
 <style>
-  body{margin:0;font-family:system-ui,sans-serif;background:#0a1220;color:#eef3fb;padding:24px}
-  h1{color:#e8323c;margin:0 0 16px;display:flex;align-items:center;gap:12px}
-  .logo{max-height:60px}
-  button{font-size:1.1rem;padding:12px 18px;border-radius:8px;border:0;margin:4px;cursor:pointer;font-weight:700}
-  .fila{display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start}
-  .caja{background:#111d33;border:1px solid #24365a;border-radius:12px;padding:16px;flex:1;min-width:260px}
-  .q{font-size:2rem;font-weight:700}
-  .op{padding:10px;border-radius:8px;margin:6px 0;font-size:1.3rem}
-  .ok{outline:4px solid #3fcf8e}
-  li{font-size:1.2rem;margin:4px 0}
-  #crono{font-size:5rem;font-weight:800;color:#9fd8ff;line-height:1}
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;font-family:Montserrat,system-ui,sans-serif;color:#f1f5f9;text-align:center;
+    background:radial-gradient(circle at 50% 0%,#1e3a8a 0%,#0b1120 70%);padding:24px 18px}
+  .logo{max-height:70px;margin:0 auto 6px;display:block}
+  h1{margin:0 0 22px;font-weight:900;font-size:1.7rem;letter-spacing:.02em}
+  h1 span{color:#ef4444}
+  input{width:100%;font:inherit;font-size:1.2rem;padding:16px;border-radius:14px;border:2px solid #334155;background:#0f172a;color:#fff;margin-bottom:14px}
+  .eqs{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .eqs button{font:inherit;font-weight:700;font-size:1.05rem;padding:20px 8px;border-radius:14px;border:0;color:#fff;cursor:pointer}
+  .card{background:rgba(15,23,42,.8);border:1px solid #334155;border-radius:18px;padding:18px;margin-bottom:18px}
+  .tag{display:inline-block;padding:6px 14px;border-radius:999px;font-weight:700}
+  .buzz{width:min(78vw,320px);aspect-ratio:1;border-radius:50%;border:0;margin:20px auto;display:block;font:inherit;
+    font-weight:900;font-size:2.4rem;color:#fff;cursor:pointer;box-shadow:0 12px 0 rgba(0,0,0,.35),0 0 40px rgba(239,68,68,.45)}
+  .buzz:active{transform:translateY(8px);box-shadow:0 4px 0 rgba(0,0,0,.35)}
+  .buzz:disabled{filter:grayscale(1);opacity:.35;box-shadow:none}
+  .msg{font-size:1.25rem;font-weight:700}
+  .q{font-size:1.15rem;font-weight:700;line-height:1.35}
 </style></head><body>
-<h1><img class="logo" src="/logo.png" alt="" onerror="this.remove()">La AC Más Débil · Conductor</h1>
-<div id="login"><input id="clave" type="password" placeholder="Contraseña" style="font-size:1.2rem;padding:10px">
-  <button id="entrar">Entrar</button></div>
-<div id="app" hidden></div>
+<img class="logo" src="/logo.png" alt="" onerror="this.remove()">
+<h1>El Rival <span>Más Débil</span></h1>
+<div id="app"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
 const sock = io();
-let clave = '', st = null, fin = 0;
+let id = localStorage.getItem('rmd-id');
+if (!id) { id = Math.random().toString(36).slice(2); localStorage.setItem('rmd-id', id); }
+let nombre = localStorage.getItem('rmd-nombre') || '';
+let eq = localStorage.getItem('rmd-eq'); eq = eq === null ? null : +eq;
+let st = null;
 const app = document.getElementById('app');
 const esc = t => String(t).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const enviar = (acc, n) => sock.emit('host', { clave, acc, n });
+const unirse = () => sock.emit('unirse', { id, nombre, eq });
 
-document.getElementById('entrar').onclick = () => { clave = document.getElementById('clave').value; enviar('nada'); };
-sock.on('clave', ok => {
-  if (ok) { document.getElementById('login').hidden = true; app.hidden = false; pintar(); }
-  else alert('Contraseña incorrecta');
-});
-sock.on('estado', e => { st = e; fin = Date.now() + (e.restante || 0); if (!app.hidden) pintar(); });
-setInterval(() => {
-  const c = document.getElementById('crono');
-  if (c) c.textContent = st && st.abierta ? Math.max(0, Math.ceil((fin - Date.now()) / 1000)) : '';
-}, 250);
+sock.on('connect', () => { if (nombre && eq !== null) unirse(); });
+sock.on('estado', e => { st = e; pintar(); });
 
 function pintar() {
   if (!st) return;
-  const url = location.origin;
-  const qr = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=${encodeURIComponent(url)}`;
-  const colores = ['#e8323c', '#2f8fd8', '#e9a91f', '#3cae74'];
-  let centro = '';
-  if (st.pregunta && st.fase === 'preguntas') {
-    centro = `<div id="crono"></div><p>Pregunta ${st.qi + 1} de ${st.total} · ${st.respondieron} respuestas</p>
-      <div class="q">${esc(st.pregunta.q)}</div>` +
-      st.pregunta.o.map((o, i) => `<div class="op ${st.correcta === i ? 'ok' : ''}" style="background:${colores[i]}">${esc(o)}</div>`).join('');
+  if (!nombre || eq === null) {
+    app.innerHTML = `<div class="card"><input id="n" maxlength="20" placeholder="Tu nombre" value="${esc(nombre)}">
+      <p style="margin:0 0 12px">Elige tu equipo</p>
+      <div class="eqs">${st.equipos.map((e, i) => `<button data-e="${i}" style="background:${e.color}">${esc(e.nombre)}</button>`).join('')}</div></div>`;
+    app.querySelectorAll('[data-e]').forEach(b => b.onclick = () => {
+      const v = document.getElementById('n').value.trim();
+      if (!v) { document.getElementById('n').focus(); return; }
+      nombre = v; eq = +b.dataset.e;
+      localStorage.setItem('rmd-nombre', nombre); localStorage.setItem('rmd-eq', eq);
+      unirse(); pintar();
+    });
+    return;
   }
-  if (st.fase === 'escenario' || st.fase === 'voto') {
-    centro = `<h2>${st.fase === 'voto' ? 'Votación abierta' : 'En el escenario'} (${st.cand.length})</h2><ol>` +
-      st.cand.slice().sort((a, b) => b.votos - a.votos)
-        .map(c => `<li>${esc(c.nombre)}${st.fase === 'voto' ? ` — ${c.votos} votos` : ''}</li>`).join('') + `</ol>` +
-      (st.fuera.length ? `<p>Eliminados: ${st.fuera.map(esc).join(', ')}</p>` : '');
+  const mio = st.equipos[eq];
+  const cab = `<div class="card"><span class="tag" style="background:${mio.color}">${esc(mio.nombre)}</span>
+    <p style="margin:10px 0 0">${esc(nombre)} · <b>${mio.pts}</b> puntos</p></div>`;
+  let cuerpo = '';
+  if (st.fase === 'espera') cuerpo = `<p class="msg">Espera la primera pregunta…</p>`;
+  else if (st.fase === 'abierta') {
+    const bloq = st.bloqueados.includes(eq);
+    cuerpo = `<p class="q">${esc(st.pregunta)}</p>
+      <button class="buzz" id="buzz" style="background:${mio.color}" ${bloq ? 'disabled' : ''}>${bloq ? 'Bloqueado' : '¡YA!'}</button>
+      ${bloq ? '<p class="msg">Tu equipo falló esta pregunta</p>' : ''}`;
+  } else if (st.fase === 'turno') {
+    const t = st.turno, gane = t.eq === eq;
+    cuerpo = `<p class="q">${esc(st.pregunta)}</p><p class="msg" style="font-size:1.6rem;color:${st.equipos[t.eq].color}">
+      ${gane ? '¡Ganó tu equipo! 🎤' : 'Contesta ' + esc(st.equipos[t.eq].nombre)}</p><p>${esc(t.nombre)} presionó primero</p>`;
+  } else if (st.fase === 'revelada') {
+    cuerpo = `<p class="q">${esc(st.pregunta)}</p><p class="msg">Respuesta: ${esc(st.respuesta || '')}</p>`;
   }
-  app.innerHTML = `<div class="fila">
-    <div class="caja" style="flex:0 0 auto;text-align:center"><img src="${qr}" alt="QR" width="280" height="280"><p>${esc(url)}</p>
-      <p>${st.jugadores.length} conectados</p></div>
-    <div class="caja">${centro || '<p class="q">Escaneen el QR para entrar</p>'}</div>
-    <div class="caja"><h3>Top 15</h3><ol>${st.jugadores.slice(0, 15).map(j => `<li>${esc(j.nombre)} — ${j.pts}</li>`).join('')}</ol></div>
-  </div>
-  <div style="margin-top:16px">
-    <button data-a="siguiente">Siguiente pregunta</button>
-    <button data-a="cerrar">Cerrar y mostrar respuesta</button>
-    <button data-a="clasificar" style="background:#f2c94c">Pasar top 15 al escenario</button>
-    <button data-a="abrirVoto" style="background:#e8323c;color:#fff">Abrir votación</button>
-    <button data-a="eliminar">Eliminar al más votado</button>
-    <button data-a="reiniciar" style="background:#24365a;color:#fff">Reiniciar todo</button>
-  </div>`;
-  app.querySelectorAll('[data-a]').forEach(b => b.onclick = () => {
-    const a = b.dataset.a;
-    if (a === 'reiniciar' && !confirm('¿Borrar todo y empezar de cero?')) return;
-    enviar(a, 15);
-  });
+  app.innerHTML = cab + cuerpo +
+    `<p><button id="cambiar" style="background:none;border:0;color:#94a3b8;text-decoration:underline;font:inherit">Cambiar de equipo</button></p>`;
+  const b = document.getElementById('buzz');
+  if (b) b.onclick = () => { if (navigator.vibrate) navigator.vibrate(80); sock.emit('presionar', { id }); };
+  document.getElementById('cambiar').onclick = () => { eq = null; localStorage.removeItem('rmd-eq'); pintar(); };
 }
 </script></body></html>
