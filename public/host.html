@@ -27,6 +27,7 @@
   .eq small{opacity:.85}
   .ctrl{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
   .ctrl button{font:inherit;font-weight:700;font-size:1.05rem;padding:14px 22px;border-radius:12px;border:0;cursor:pointer}
+  .ctrl button:disabled{opacity:.35;cursor:default}
   #login{display:flex;gap:10px}
   #login input{font:inherit;font-size:1.1rem;padding:12px;border-radius:10px;border:2px solid #334155;background:#0f172a;color:#fff}
   #login button{font:inherit;font-weight:700;padding:12px 20px;border-radius:10px;border:0;cursor:pointer}
@@ -39,7 +40,7 @@
 <script src="/socket.io/socket.io.js"></script>
 <script>
 const sock = io();
-let clave = '', st = null, ultimoTurno = null;
+let clave = '', st = null;
 const app = document.getElementById('app');
 const esc = t => String(t).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const enviar = acc => sock.emit('host', { clave, acc });
