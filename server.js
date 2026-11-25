@@ -8,42 +8,45 @@ const io = new Server(server);
 app.use(express.static('public'));
 
 const CLAVE = process.env.CLAVE || 'ases';
-const TIEMPO = 15000; // 15 segundos por pregunta
+const PUNTOS = 100;
 
 const PREGUNTAS = [
-  { q: '¿Cuál es el planeta más grande?', o: ['Marte', 'Júpiter', 'Saturno', 'Tierra'], c: 1 },
-  { q: '¿En qué año inició la Independencia de México?', o: ['1810', '1821', '1910', '1776'], c: 0 },
-  { q: '¿Cuál es la capital de Canadá?', o: ['Toronto', 'Montreal', 'Ottawa', 'Vancouver'], c: 2 },
-  { q: '¿Cuántos lados tiene un hexágono?', o: ['5', '6', '7', '8'], c: 1 },
-  { q: '¿Quién pintó "La noche estrellada"?', o: ['Picasso', 'Dalí', 'Monet', 'Van Gogh'], c: 3 },
-  { q: '¿Cuál es el símbolo químico del oro?', o: ['Au', 'Ag', 'Or', 'Go'], c: 0 },
-  { q: '¿Cuál es el estado más grande de México?', o: ['Sonora', 'Chihuahua', 'Coahuila', 'Durango'], c: 1 },
-  { q: '¿Cuál es el hueso más largo del cuerpo?', o: ['Húmero', 'Tibia', 'Fémur', 'Radio'], c: 2 },
-  { q: '¿Cuánto es 12 al cuadrado?', o: ['124', '144', '132', '164'], c: 1 },
-  { q: '¿De qué planta se hace el tequila?', o: ['Maguey pulquero', 'Nopal', 'Caña', 'Agave azul'], c: 3 }
+  { q: '¿Cuál es el planeta más grande del sistema solar?', a: 'Júpiter' },
+  { q: '¿En qué año inició la Independencia de México?', a: '1810' },
+  { q: '¿Cuál es la capital de Canadá?', a: 'Ottawa' },
+  { q: '¿Cuántos lados tiene un hexágono?', a: '6' },
+  { q: '¿Quién pintó "La noche estrellada"?', a: 'Vincent van Gogh' },
+  { q: '¿Cuál es el símbolo químico del oro?', a: 'Au' },
+  { q: '¿Cuál es el estado más grande de México?', a: 'Chihuahua' },
+  { q: '¿Cuál es el hueso más largo del cuerpo humano?', a: 'El fémur' },
+  { q: '¿Cuánto es 12 al cuadrado?', a: '144' },
+  { q: '¿De qué planta se hace el tequila?', a: 'Agave azul' },
+  { q: '¿Qué pintora mexicana es famosa por sus autorretratos?', a: 'Frida Kahlo' },
+  { q: '¿Cuál es el océano más grande del mundo?', a: 'Pacífico' },
+  { q: '¿Qué cultura construyó Chichén Itzá?', a: 'La maya' },
+  { q: '¿Cuántos días tiene un año bisiesto?', a: '366' },
+  { q: '¿Cuál es la montaña más alta de México?', a: 'Pico de Orizaba' }
 ];
 
+const nuevo = () => ({
+  equipos: [
+    { nombre: 'Equipo Rojo', color: '#ef4444', pts: 0 },
+    { nombre: 'Equipo Azul', color: '#3b82f6', pts: 0 },
+    { nombre: 'Equipo Amarillo', color: '#eab308', pts: 0 },
+    { nombre: 'Equipo Verde', color: '#22c55e', pts: 0 }
+  ],
+  jug: {}, qi: -1, fase: 'espera', turno: null, bloqueados: []
+});
 let s = nuevo();
-function nuevo() {
-  return { fase: 'espera', qi: -1, abierta: false, t0: 0, jug: {}, resp: {}, cand: [], votos: {}, fuera: [] };
-}
 
 function publico() {
   const q = PREGUNTAS[s.qi];
   return {
-    fase: s.fase, qi: s.qi, total: PREGUNTAS.length, abierta: s.abierta,
-    restante: s.abierta ? Math.max(0, TIEMPO - (Date.now() - s.t0)) : 0,
-    pregunta: q ? { q: q.q, o: q.o } : null,
-    correcta: q && !s.abierta ? q.c : null,
-    respondieron: Object.keys(s.resp).length,
-    jugadores: Object.entries(s.jug)
-      .map(([id, j]) => ({ id, nombre: j.nombre, pts: j.pts }))
-      .sort((a, b) => b.pts - a.pts),
-    cand: s.cand.map(id => ({
-      id, nombre: s.jug[id] ? s.jug[id].nombre : '?',
-      votos: Object.values(s.votos).filter(v => v === id).length
-    })),
-    fuera: s.fuera.map(id => (s.jug[id] ? s.jug[id].nombre : '?'))
+    equipos: s.equipos, fase: s.fase, qi: s.qi, total: PREGUNTAS.length,
+    pregunta: q ? q.q : null,
+    respuesta: q && s.fase === 'revelada' ? q.a : null,
+    turno: s.turno, bloqueados: s.bloqueados,
+    conteo: s.equipos.map((_, i) => Object.values(s.jug).filter(j => j.eq === i).length)
   };
 }
 const avisar = () => io.emit('estado', publico());
@@ -51,50 +54,34 @@ const avisar = () => io.emit('estado', publico());
 io.on('connection', sock => {
   sock.emit('estado', publico());
 
-  sock.on('unirse', ({ id, nombre }) => {
-    if (!id || !nombre) return;
-    if (!s.jug[id]) s.jug[id] = { nombre: String(nombre).trim().slice(0, 20), pts: 0 };
+  sock.on('unirse', ({ id, nombre, eq }) => {
+    if (!id || !nombre || !(eq >= 0 && eq < 4)) return;
+    s.jug[id] = { nombre: String(nombre).trim().slice(0, 20), eq };
     avisar();
   });
 
-  sock.on('responder', ({ id, op }) => {
-    if (!s.abierta || !s.jug[id] || s.resp[id] !== undefined) return;
-    s.resp[id] = op;
-    if (op === PREGUNTAS[s.qi].c) {
-      const t = Date.now() - s.t0;
-      s.jug[id].pts += Math.max(500, Math.round(1000 - (t / TIEMPO) * 500));
-    }
+  sock.on('presionar', ({ id }) => {
+    const j = s.jug[id];
+    if (s.fase !== 'abierta' || !j || s.bloqueados.includes(j.eq)) return;
+    s.fase = 'turno';
+    s.turno = { eq: j.eq, nombre: j.nombre };
     avisar();
   });
 
-  sock.on('votar', ({ id, cand }) => {
-    if (s.fase !== 'voto' || !s.cand.includes(cand)) return;
-    s.votos[id] = cand;
-    avisar();
-  });
-
-  sock.on('host', ({ clave, acc, n }) => {
+  sock.on('host', ({ clave, acc }) => {
     if (clave !== CLAVE) return sock.emit('clave', false);
     sock.emit('clave', true);
     if (acc === 'siguiente' && s.qi < PREGUNTAS.length - 1) {
-      s.fase = 'preguntas'; s.qi++; s.abierta = true; s.resp = {}; s.t0 = Date.now();
-      const esta = s.qi;
-      setTimeout(() => { if (s.qi === esta && s.abierta) { s.abierta = false; avisar(); } }, TIEMPO);
+      s.qi++; s.fase = 'abierta'; s.turno = null; s.bloqueados = [];
     }
-    if (acc === 'cerrar') s.abierta = false;
-    if (acc === 'clasificar') {
-      s.cand = publico().jugadores.slice(0, n || 15).map(j => j.id);
-      s.fase = 'escenario'; s.fuera = [];
+    if (acc === 'correcta' && s.turno) {
+      s.equipos[s.turno.eq].pts += PUNTOS; s.fase = 'revelada';
     }
-    if (acc === 'abrirVoto') { s.fase = 'voto'; s.votos = {}; }
-    if (acc === 'eliminar') {
-      const lista = publico().cand.sort((a, b) => b.votos - a.votos);
-      if (lista.length && lista[0].votos > 0) {
-        s.cand = s.cand.filter(id => id !== lista[0].id);
-        s.fuera.push(lista[0].id);
-      }
-      s.fase = 'escenario';
+    if (acc === 'incorrecta' && s.turno) {
+      s.bloqueados.push(s.turno.eq); s.turno = null;
+      s.fase = s.bloqueados.length >= 4 ? 'revelada' : 'abierta';
     }
+    if (acc === 'revelar' && s.qi >= 0) { s.fase = 'revelada'; }
     if (acc === 'reiniciar') s = nuevo();
     avisar();
   });
