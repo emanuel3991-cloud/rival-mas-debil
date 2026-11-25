@@ -7,60 +7,98 @@
   *{box-sizing:border-box}
   body{margin:0;min-height:100vh;font-family:Montserrat,system-ui,sans-serif;color:#f1f5f9;
     background:radial-gradient(circle at 50% 0%,#1e3a8a 0%,#0b1120 70%);padding:24px 32px}
-  header{display:flex;align-items:center;gap:16px;margin-bottom:22px}
+  header{display:flex;align-items:center;gap:16px;margin-bottom:20px;flex-wrap:wrap}
   .logo{max-height:64px}
   h1{margin:0;font-weight:900;font-size:2.4rem}
   h1 span{color:#ef4444}
+  .pill{margin-left:auto;background:#334155;padding:8px 16px;border-radius:999px;font-weight:700}
   .grid{display:grid;grid-template-columns:260px 1fr;gap:24px;align-items:start}
   .card{background:rgba(15,23,42,.85);border:1px solid #334155;border-radius:20px;padding:20px}
   .qr{text-align:center}
   .qr img{width:220px;height:220px;background:#fff;padding:10px;border-radius:14px}
   .qr p{margin:8px 0 0;font-size:.85rem;color:#94a3b8;word-break:break-all}
   .num{color:#94a3b8;font-weight:700;letter-spacing:.1em;text-transform:uppercase;font-size:.9rem}
-  .q{font-size:2.6rem;font-weight:900;line-height:1.15;margin:10px 0 18px}
-  .estado{font-size:2rem;font-weight:900;padding:22px;border-radius:16px;text-align:center}
-  .equipos{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:22px}
-  .eq{border-radius:18px;padding:16px;text-align:center;border:4px solid transparent;transition:transform .2s}
-  .eq.gana{transform:scale(1.06);border-color:#fff;box-shadow:0 0 40px rgba(255,255,255,.35)}
-  .eq.bloq{opacity:.3}
-  .eq b{display:block;font-size:2.8rem;font-weight:900}
-  .eq small{opacity:.85}
-  .ctrl{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+  .q{font-size:2.5rem;font-weight:900;line-height:1.15;margin:10px 0 18px}
+  .estado{font-size:2rem;font-weight:900;padding:20px;border-radius:16px;text-align:center}
+  .equipos{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:20px}
+  .eq{border-radius:18px;padding:16px;text-align:center;border:4px solid transparent}
+  .eq.gana{transform:scale(1.05);border-color:#fff;box-shadow:0 0 40px rgba(255,255,255,.35)}
+  .eq.bloq,.eq.muerto{opacity:.25}
+  .eq b{display:block;font-size:2.6rem;font-weight:900}
+  .ctrl{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px;align-items:center}
   .ctrl button{font:inherit;font-weight:700;font-size:1.05rem;padding:14px 22px;border-radius:12px;border:0;cursor:pointer}
-  .ctrl button:disabled{opacity:.35;cursor:default}
+  .ctrl button:disabled{opacity:.3;cursor:default}
+  .b-w{background:#f1f5f9;color:#0b1120}.b-g{background:#22c55e;color:#04210f}.b-r{background:#ef4444;color:#fff}
+  .b-y{background:#facc15;color:#2b1d00}.b-s{background:#334155;color:#fff}.b-o{background:transparent;color:#94a3b8;border:2px solid #334155!important}
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  ol{margin:6px 0;padding-left:26px} li{font-size:1.2rem;margin:4px 0}
+  .rmd{display:grid;grid-template-columns:170px 1fr 230px;gap:20px;align-items:start}
+  .cadena{display:flex;flex-direction:column-reverse;gap:6px}
+  .paso{border:2px solid #334155;border-radius:999px;padding:7px 0;text-align:center;font-weight:900;font-size:1.3rem;color:#64748b}
+  .paso.ok{background:#7f1d1d;border-color:#ef4444;color:#fff}
+  .paso.act{background:#ef4444;border-color:#fca5a5;color:#fff;box-shadow:0 0 20px rgba(239,68,68,.6)}
+  .banco{margin-top:10px;border:2px solid #facc15;border-radius:14px;padding:10px;text-align:center}
+  .banco b{display:block;font-size:2.2rem;color:#facc15}
+  #crono{font-size:5rem;font-weight:900;color:#93c5fd;line-height:1}
+  #crono.low{color:#ef4444}
+  .quien{font-size:2.6rem;font-weight:900;text-transform:uppercase}
+  .resp{color:#86efac;font-weight:700;font-size:1.3rem}
+  .pl{border:2px solid #334155;border-radius:10px;padding:8px 12px;margin-bottom:6px;font-weight:700;display:flex;justify-content:space-between}
+  .pl.cur{border-color:#93c5fd;color:#93c5fd}
+  .pl.out{opacity:.25;text-decoration:line-through}
+  table{width:100%;border-collapse:collapse;font-size:1.15rem}
+  th,td{padding:8px;border-bottom:1px solid #334155;text-align:right} th:first-child,td:first-child{text-align:left}
+  .adios{text-align:center;padding:40px 0}
+  .adios .n{font-size:5rem;font-weight:900;text-transform:uppercase;line-height:1}
+  .adios .l{font-size:2.4rem;font-weight:900;color:#ef4444;margin-top:12px}
+  .dots{display:flex;gap:8px}
+  .dots i{width:44px;height:44px;border-radius:50%;border:3px solid #334155;display:grid;place-items:center;font-style:normal;font-weight:900}
+  .dots i.y{background:#22c55e;border-color:#22c55e}.dots i.n{background:#ef4444;border-color:#ef4444}
+  .duelo{display:grid;grid-template-columns:240px 1fr;gap:16px;align-items:center;margin-bottom:12px}
   #login{display:flex;gap:10px}
   #login input{font:inherit;font-size:1.1rem;padding:12px;border-radius:10px;border:2px solid #334155;background:#0f172a;color:#fff}
   #login button{font:inherit;font-weight:700;padding:12px 20px;border-radius:10px;border:0;cursor:pointer}
-  @keyframes pop{0%{transform:scale(.6);opacity:0}100%{transform:none;opacity:1}}
-  .pop{animation:pop .35s ease-out}
+  label.chk{color:#94a3b8;font-size:.95rem}
+  @keyframes pop{0%{transform:scale(.6);opacity:0}100%{transform:none;opacity:1}} .pop{animation:pop .35s ease-out}
 </style></head><body>
-<header><img class="logo" src="/logo.png" alt="" onerror="this.remove()"><h1>El Rival <span>Más Débil</span></h1></header>
+<header><img class="logo" src="/logo.png" alt="" onerror="this.remove()"><h1>El Rival <span>Más Débil</span></h1><span class="pill" id="pill"></span></header>
 <div id="login"><input id="clave" type="password" placeholder="Contraseña"><button id="entrar">Entrar</button></div>
 <div id="app" hidden></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
 const sock = io();
-let clave = '', st = null;
+let clave = '', st = null, secreto = '', finEn = 0, verResp = localStorage.getItem('rmd-verresp') === '1';
 const app = document.getElementById('app');
 const esc = t => String(t).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const enviar = acc => sock.emit('host', { clave, acc });
+const nom = pid => { const j = st.jugadores.find(x => x.id === pid); return j ? j.nombre : '?'; };
+const mmss = ms => { const s = Math.ceil(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
 
 document.getElementById('entrar').onclick = () => { clave = document.getElementById('clave').value; enviar('nada'); };
 sock.on('clave', ok => {
   if (ok) { document.getElementById('login').hidden = true; app.hidden = false; pintar(); }
   else alert('Contraseña incorrecta');
 });
+sock.on('secreto', d => { secreto = d.a; const r = document.getElementById('resp'); if (r) r.textContent = verResp ? 'Respuesta: ' + secreto : ''; });
 sock.on('estado', e => {
   const nuevoTurno = e.turno && (!st || !st.turno);
-  st = e; if (!app.hidden) pintar();
-  if (nuevoTurno) timbre();
+  st = e;
+  if (e.fin) finEn = Date.now() + e.fin.restante;
+  if (!app.hidden) pintar();
+  if (nuevoTurno) sonido([880, 1320]);
 });
+setInterval(() => {
+  const c = document.getElementById('crono');
+  if (!c || !st || !st.fin) return;
+  const left = st.fin.corriendo ? Math.max(0, finEn - Date.now()) : st.fin.restante;
+  c.textContent = mmss(left); c.classList.toggle('low', left <= 10000);
+}, 250);
 
 let actx;
-function timbre() {
+function sonido(fs) {
   try {
     actx = actx || new AudioContext();
-    [880, 1320].forEach((f, k) => {
+    fs.forEach((f, k) => {
       const o = actx.createOscillator(), g = actx.createGain(), t = actx.currentTime + k * .12;
       o.frequency.value = f; o.type = 'triangle';
       g.gain.setValueAtTime(.2, t); g.gain.exponentialRampToValueAtTime(.001, t + .4);
@@ -71,39 +109,126 @@ function timbre() {
 
 function pintar() {
   if (!st) return;
+  if (st.fin) return pintarFinal();
+  const pill = document.getElementById('pill');
+  pill.textContent = st.fase === 'final' ? 'Finalistas' : `Ronda ${st.ronda} · ${st.ronda === 1 ? 'por equipos' : 'individual'}`;
   const url = location.origin;
   const qr = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(url)}`;
-  let centro = '<p class="q">Escaneen el QR y elijan su equipo</p>';
+  const vivos = st.jugadores.filter(j => !j.fuera);
+
+  if (st.fase === 'final') {
+    app.innerHTML = `<div class="card"><h2 style="margin:0 0 10px;font-size:2.4rem">🎤 Pasan a la final (${vivos.length})</h2>
+      <div class="cols">${st.equipos.map((e, i) => e.vivo ? `<div><b style="color:${e.color};font-size:1.4rem">${esc(e.nombre)}</b><ol>${
+        vivos.filter(j => j.eq === i).map(j => `<li>${esc(j.nombre)} — ${j.pts}</li>`).join('')}</ol></div>` : '').join('')}</div></div>
+      <div class="ctrl"><button class="b-r" data-a="iniciarFinal">Empezar El Rival Más Débil ▶</button>
+      <button class="b-o" data-a="reiniciar">Reiniciar todo</button></div>`;
+    return enlazar();
+  }
+
+  let centro = `<p class="q">${st.ronda === 1 ? 'Escaneen el QR y elijan su equipo' : 'Ronda 2: cada quien suma sus propios puntos'}</p>`;
   if (st.qi >= 0) {
     let est = '';
     if (st.fase === 'abierta') est = `<div class="estado" style="background:#1e293b">¡Presionen ya!</div>`;
-    if (st.fase === 'turno') {
-      const e = st.equipos[st.turno.eq];
-      est = `<div class="estado pop" style="background:${e.color}">Contesta ${esc(e.nombre)} · ${esc(st.turno.nombre)}</div>`;
-    }
+    if (st.fase === 'turno') { const e = st.equipos[st.turno.eq];
+      est = `<div class="estado pop" style="background:${e.color}">Contesta ${esc(st.turno.nombre)} · ${esc(e.nombre)}</div>`; }
     if (st.fase === 'revelada') est = `<div class="estado" style="background:#065f46">Respuesta: ${esc(st.respuesta || '')}</div>`;
     centro = `<div class="num">Pregunta ${st.qi + 1} de ${st.total}</div><div class="q">${esc(st.pregunta)}</div>${est}`;
   }
-  const equipos = st.equipos.map((e, i) => {
-    const gana = st.turno && st.turno.eq === i, bloq = st.bloqueados.includes(i);
-    return `<div class="eq ${gana ? 'gana' : ''} ${bloq ? 'bloq' : ''}" style="background:${e.color}">
-      <div>${esc(e.nombre)}</div><b>${e.pts}</b><small>${st.conteo[i]} jugadores</small></div>`;
-  }).join('');
-  const t = st.fase === 'turno';
-  app.innerHTML = `<div class="grid">
-      <div class="card qr"><img src="${qr}" alt="Código QR"><p>${esc(url)}</p></div>
-      <div class="card">${centro}</div>
-    </div>
-    <div class="equipos">${equipos}</div>
+  let abajo = '';
+  if (st.ronda === 1) {
+    abajo = `<div class="equipos">${st.equipos.map((e, i) => {
+      const gana = st.turno && st.turno.eq === i, bloq = st.bloqueados.includes(i);
+      const n = st.jugadores.filter(j => j.eq === i).length;
+      return `<div class="eq ${gana ? 'gana' : ''} ${bloq ? 'bloq' : ''}" style="background:${e.color}"><div>${esc(e.nombre)}</div><b>${e.pts}</b><small>${n} jugadores</small></div>`;
+    }).join('')}</div>`;
+  } else {
+    abajo = `<div class="cols" style="margin-top:20px">${st.equipos.map((e, i) => e.vivo ? `<div class="card" style="border-color:${e.color}">
+      <b style="color:${e.color};font-size:1.3rem">${esc(e.nombre)} · van pasando</b><ol>${
+      vivos.filter(j => j.eq === i).sort((a, b) => b.pts - a.pts).slice(0, 5).map(j => `<li>${esc(j.nombre)} — ${j.pts}</li>`).join('')}</ol></div>` : '').join('')}</div>`;
+  }
+  const t = st.fase === 'turno', ultima = st.qi >= st.total - 1;
+  app.innerHTML = `<div class="grid"><div class="card qr"><img src="${qr}" alt="Código QR"><p>${esc(url)}</p><p>${st.jugadores.length} conectados</p></div>
+    <div class="card">${centro}</div></div>${abajo}
     <div class="ctrl">
-      <button data-a="siguiente" style="background:#f1f5f9;color:#0b1120">Siguiente pregunta ▶</button>
-      <button data-a="correcta" style="background:#22c55e;color:#04210f" ${t ? '' : 'disabled'}>✓ Correcta</button>
-      <button data-a="incorrecta" style="background:#ef4444;color:#fff" ${t ? '' : 'disabled'}>✕ Incorrecta</button>
-      <button data-a="revelar" style="background:#334155;color:#fff">Mostrar respuesta</button>
-      <button data-a="reiniciar" style="background:transparent;color:#94a3b8;border:2px solid #334155">Reiniciar todo</button>
+      <button class="b-w" data-a="siguiente" ${ultima ? 'disabled' : ''}>Siguiente pregunta ▶</button>
+      <button class="b-g" data-a="correcta" ${t ? '' : 'disabled'}>✓ Correcta</button>
+      <button class="b-r" data-a="incorrecta" ${t ? '' : 'disabled'}>✕ Incorrecta</button>
+      <button class="b-s" data-a="revelar">Mostrar respuesta</button>
+      ${st.ronda === 1 ? `<button class="b-y" data-a="terminarRonda1" data-c="¿Terminar la ronda 1? Se eliminan los 2 equipos con menos puntos.">Terminar ronda 1</button>`
+        : `<button class="b-y" data-a="terminarRonda2" data-c="¿Terminar la ronda 2? Pasan los 5 mejores de cada equipo.">Terminar ronda 2</button>`}
+      <button class="b-o" data-a="reiniciar" data-c="¿Borrar todo y empezar de cero?">Reiniciar todo</button>
     </div>`;
+  enlazar();
+}
+
+function pintarFinal() {
+  const f = st.fin;
+  document.getElementById('pill').textContent = `Final · Ronda ${f.n}${f.mult > 1 ? ' · ×3' : ''} · Banco total ${f.total}`;
+  let html = '', ctrl = '';
+  if (f.modo === 'ronda') {
+    const pasos = f.cadena.slice(1).map((v, i) => `<div class="paso ${i + 1 < f.k ? 'ok' : i + 1 === f.k ? 'act' : ''}">${v}</div>`).join('');
+    html = `<div class="rmd">
+      <div><div class="cadena">${pasos}</div><div class="banco">Banco de la ronda<b>${f.banco}</b></div></div>
+      <div class="card"><div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap"><div id="crono"></div>
+        <div><div class="num">Turno de</div><div class="quien">${esc(nom(f.cur))}</div></div></div>
+        <p class="q" style="font-size:2rem">${f.corriendo || f.prev ? esc(f.pregunta) : 'Listos. El reloj arranca con la primera pregunta.'}</p>
+        <div class="resp" id="resp">${verResp ? 'Respuesta: ' + esc(secreto) : ''}</div>
+        ${f.prev ? `<p style="color:#94a3b8">Anterior: ${esc(f.prev.q)} <b style="color:#f1f5f9">${esc(f.prev.a)}</b></p>` : ''}</div>
+      <div>${f.todos.map(p => `<div class="pl ${p === f.cur ? 'cur' : ''} ${f.vivos.includes(p) ? '' : 'out'}"><span>${esc(nom(p))}</span>${
+        f.vivos.includes(p) ? `<small>${(f.stats.find(x => x.id === p) || {c:0}).c}✓ ${(f.stats.find(x => x.id === p) || {w:0}).w}✕</small>` : ''}</div>`).join('')}</div></div>`;
+    ctrl = `<button class="b-w" data-a="fReloj">${f.corriendo ? 'Pausa' : 'Iniciar / reanudar reloj'}</button>
+      <button class="b-g" data-a="fOk" ${f.corriendo ? '' : 'disabled'}>✓ Correcta</button>
+      <button class="b-r" data-a="fNo" ${f.corriendo ? '' : 'disabled'}>✕ Incorrecta</button>
+      <button class="b-y" data-a="fBanco" ${f.corriendo && f.k > 0 ? '' : 'disabled'}>¡BANCO!</button>
+      <button class="b-s" data-a="fCambiar">Cambiar pregunta</button>
+      <button class="b-o" data-a="fTerminar" data-c="¿Terminar la ronda ya?">Terminar ronda</button>
+      <label class="chk"><input type="checkbox" id="vr" ${verResp ? 'checked' : ''}> Ver respuestas (solo conductor)</label>`;
+  }
+  if (f.modo === 'resumen' || f.modo === 'preduelo') {
+    const fuerte = f.stats[0], debil = f.stats[f.stats.length - 1];
+    html = `<div class="card"><h2 style="margin:0;font-size:2.4rem">Se aseguraron ${f.ultimoBanco} puntos${f.mult > 1 ? ' (triple)' : ''}</h2>
+      <table><thead><tr><th>Concursante</th><th>Correctas</th><th>Incorrectas</th><th>Al banco</th></tr></thead><tbody>${
+      f.stats.map(x => `<tr><td>${esc(nom(x.id))}${x.id === fuerte.id ? ' 💪' : ''}${x.id === debil.id && f.stats.length > 1 ? ' 🔻' : ''}</td><td>${x.c}</td><td>${x.w}</td><td>${x.b}</td></tr>`).join('')}</tbody></table>
+      <p style="color:#94a3b8">💪 el más fuerte · 🔻 el más débil según los números</p></div>`;
+    ctrl = f.modo === 'resumen' ? `<button class="b-r" data-a="fAbrirVoto">Abrir votación en los celulares</button>`
+      : `<button class="b-r" data-a="fDuelo">Ir al duelo final ⚔️</button>`;
+  }
+  if (f.modo === 'voto') {
+    const max = Math.max(1, ...f.vivos.map(v => f.conteo[v] || 0));
+    html = `<div class="card"><h2 style="margin:0 0 6px;font-size:2.4rem">¿Quién es el rival más débil?</h2>
+      <p style="color:#94a3b8">${f.votantes} votos recibidos · voten desde su celular</p>${
+      f.vivos.slice().sort((a, b) => (f.conteo[b] || 0) - (f.conteo[a] || 0)).map(v => `<div style="margin:10px 0">
+        <div style="display:flex;justify-content:space-between;font-weight:900;font-size:1.4rem"><span>${esc(nom(v))}</span><span>${f.conteo[v] || 0}</span></div>
+        <div style="height:14px;background:#1e293b;border-radius:8px;overflow:hidden"><div style="height:100%;width:${(f.conteo[v] || 0) / max * 100}%;background:#ef4444"></div></div></div>`).join('')}</div>`;
+    ctrl = `<button class="b-r" data-a="fCerrarVoto" data-c="¿Cerrar la votación y eliminar al más votado?">Cerrar votación</button>`;
+  }
+  if (f.modo === 'eliminado') {
+    html = `<div class="card adios pop"><div class="n">${esc(nom(f.eliminado))}</div><div class="l">Eres el rival más débil.</div><div class="l" style="color:#f1f5f9">Adiós.</div></div>`;
+    ctrl = `<button class="b-w" data-a="fSigRonda">Siguiente ronda · quedan ${f.vivos.length}</button>`;
+  }
+  if (f.modo === 'duelo') {
+    const d = f.duelo, n = Math.max(5, d.res[0].length, d.res[1].length);
+    html = `<div class="card"><div class="num">Duelo final · turno de</div><div class="quien">${esc(nom(d.p[d.turno]))}</div>
+      <p class="q" style="font-size:2rem">${esc(f.pregunta)}</p><div class="resp" id="resp">${verResp ? 'Respuesta: ' + esc(secreto) : ''}</div>
+      ${d.p.map((p, k) => `<div class="duelo"><b style="font-size:1.6rem;${d.turno === k ? 'color:#93c5fd' : ''}">${esc(nom(p))}</b><div class="dots">${
+        Array.from({ length: n }, (_, j) => { const v = d.res[k][j]; return `<i class="${v === true ? 'y' : v === false ? 'n' : ''}">${v === true ? '✓' : v === false ? '✕' : ''}</i>`; }).join('')}</div></div>`).join('')}</div>`;
+    ctrl = `<button class="b-g" data-a="fDok">✓ Correcta</button><button class="b-r" data-a="fDno">✕ Incorrecta</button>
+      <button class="b-s" data-a="fCambiar">Cambiar pregunta</button>
+      <label class="chk"><input type="checkbox" id="vr" ${verResp ? 'checked' : ''}> Ver respuestas (solo conductor)</label>`;
+  }
+  if (f.modo === 'ganador') {
+    html = `<div class="card adios pop"><div class="num">Ganador de El Rival Más Débil</div><div class="n" style="color:#93c5fd">🏆 ${esc(nom(f.ganador))}</div>
+      <div class="l" style="color:#facc15">${f.total} puntos</div></div>`;
+  }
+  app.innerHTML = html + `<div class="ctrl">${ctrl}<button class="b-o" data-a="reiniciar" data-c="¿Borrar todo y empezar de cero?">Reiniciar todo</button></div>`;
+  const vr = document.getElementById('vr');
+  if (vr) vr.onchange = () => { verResp = vr.checked; localStorage.setItem('rmd-verresp', verResp ? '1' : '0'); pintar(); };
+  enlazar();
+}
+
+function enlazar() {
   app.querySelectorAll('[data-a]').forEach(b => b.onclick = () => {
-    if (b.dataset.a === 'reiniciar' && !confirm('¿Borrar puntos y empezar de cero?')) return;
+    if (b.dataset.c && !confirm(b.dataset.c)) return;
     enviar(b.dataset.a);
   });
 }
