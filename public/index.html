@@ -8,7 +8,7 @@
   body{margin:0;min-height:100vh;font-family:Montserrat,system-ui,sans-serif;color:#f1f5f9;text-align:center;
     background:radial-gradient(circle at 50% 0%,#1e3a8a 0%,#0b1120 70%);padding:24px 18px}
   .logo{max-height:70px;margin:0 auto 6px;display:block}
-  h1{margin:0 0 22px;font-weight:900;font-size:1.7rem;letter-spacing:.02em}
+  h1{margin:0 0 22px;font-weight:900;font-size:1.7rem}
   h1 span{color:#ef4444}
   input{width:100%;font:inherit;font-size:1.2rem;padding:16px;border-radius:14px;border:2px solid #334155;background:#0f172a;color:#fff;margin-bottom:14px}
   .eqs{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -20,7 +20,12 @@
   .buzz:active{transform:translateY(8px);box-shadow:0 4px 0 rgba(0,0,0,.35)}
   .buzz:disabled{filter:grayscale(1);opacity:.35;box-shadow:none}
   .msg{font-size:1.25rem;font-weight:700}
+  .big{font-size:1.7rem;font-weight:900}
   .q{font-size:1.15rem;font-weight:700;line-height:1.35}
+  .voto{display:block;width:100%;font:inherit;font-weight:700;font-size:1.15rem;padding:16px;margin:8px 0;border-radius:14px;
+    border:2px solid #334155;background:#0f172a;color:#fff;cursor:pointer}
+  .voto.sel{border-color:#ef4444;background:#7f1d1d}
+  .link{background:none;border:0;color:#94a3b8;text-decoration:underline;font:inherit;cursor:pointer}
 </style></head><body>
 <img class="logo" src="/logo.png" alt="" onerror="this.remove()">
 <h1>El Rival <span>Más Débil</span></h1>
@@ -32,13 +37,15 @@ let id = localStorage.getItem('rmd-id');
 if (!id) { id = Math.random().toString(36).slice(2); localStorage.setItem('rmd-id', id); }
 let nombre = localStorage.getItem('rmd-nombre') || '';
 let eq = localStorage.getItem('rmd-eq'); eq = eq === null ? null : +eq;
-let st = null;
+let st = null, miVoto = null, rondaVoto = null;
 const app = document.getElementById('app');
 const esc = t => String(t).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const unirse = () => sock.emit('unirse', { id, nombre, eq });
 
 sock.on('connect', () => { if (nombre && eq !== null) unirse(); });
 sock.on('estado', e => { st = e; pintar(); });
+
+function nombreDe(pid) { const j = st.jugadores.find(x => x.id === pid); return j ? j.nombre : '?'; }
 
 function pintar() {
   if (!st) return;
@@ -55,27 +62,72 @@ function pintar() {
     });
     return;
   }
-  const mio = st.equipos[eq];
-  const cab = `<div class="card"><span class="tag" style="background:${mio.color}">${esc(mio.nombre)}</span>
-    <p style="margin:10px 0 0">${esc(nombre)} · <b>${mio.pts}</b> puntos</p></div>`;
-  let cuerpo = '';
-  if (st.fase === 'espera') cuerpo = `<p class="msg">Espera la primera pregunta…</p>`;
-  else if (st.fase === 'abierta') {
-    const bloq = st.bloqueados.includes(eq);
-    cuerpo = `<p class="q">${esc(st.pregunta)}</p>
-      <button class="buzz" id="buzz" style="background:${mio.color}" ${bloq ? 'disabled' : ''}>${bloq ? 'Bloqueado' : '¡YA!'}</button>
-      ${bloq ? '<p class="msg">Tu equipo falló esta pregunta</p>' : ''}`;
-  } else if (st.fase === 'turno') {
-    const t = st.turno, gane = t.eq === eq;
-    cuerpo = `<p class="q">${esc(st.pregunta)}</p><p class="msg" style="font-size:1.6rem;color:${st.equipos[t.eq].color}">
-      ${gane ? '¡Ganó tu equipo! 🎤' : 'Contesta ' + esc(st.equipos[t.eq].nombre)}</p><p>${esc(t.nombre)} presionó primero</p>`;
-  } else if (st.fase === 'revelada') {
-    cuerpo = `<p class="q">${esc(st.pregunta)}</p><p class="msg">Respuesta: ${esc(st.respuesta || '')}</p>`;
+  const yo = st.jugadores.find(j => j.id === id);
+  const miEq = st.equipos[yo ? yo.eq : eq];
+  const cab = `<div class="card"><span class="tag" style="background:${miEq.color}">${esc(miEq.nombre)}</span>
+    <p style="margin:10px 0 0">${esc(nombre)}${st.ronda === 1 && !st.fin ? ` · equipo con <b>${miEq.pts}</b> puntos` : ''}${st.ronda === 2 && !st.fin && yo ? ` · tus puntos: <b>${yo.pts}</b>` : ''}</p></div>`;
+
+  /* ---- Final: El Rival Más Débil ---- */
+  if (st.fin) {
+    const f = st.fin, soyFinalista = f.todos.includes(id), sigo = f.vivos.includes(id);
+    let c = '';
+    if (f.modo === 'voto') {
+      if (rondaVoto !== f.n) { rondaVoto = f.n; miVoto = null; }
+      c = `<p class="big">¿Quién es el rival más débil?</p><p>Toca un nombre. Puedes cambiar tu voto hasta que cierre.</p>` +
+        f.vivos.filter(v => v !== id).map(v => `<button class="voto ${miVoto === v ? 'sel' : ''}" data-v="${v}">${esc(nombreDe(v))}</button>`).join('');
+    } else if (f.modo === 'eliminado') {
+      c = f.eliminado === id ? `<p class="big">Eres el rival más débil.<br>Adiós. 👋</p>`
+        : `<p class="msg">Sale de la final:</p><p class="big">${esc(nombreDe(f.eliminado))}</p>`;
+    } else if (f.modo === 'ganador') {
+      c = f.ganador === id ? `<p class="big">🏆 ¡GANASTE!</p>` : `<p class="msg">Ganador:</p><p class="big">🏆 ${esc(nombreDe(f.ganador))}</p>`;
+    } else if (f.modo === 'duelo') {
+      c = `<p class="msg">Duelo final</p><p class="big">${esc(nombreDe(f.duelo.p[0]))} vs ${esc(nombreDe(f.duelo.p[1]))}</p>`;
+    } else if (f.modo === 'ronda') {
+      c = sigo && f.cur === id ? `<p class="big">🎤 ¡Es tu turno!</p>`
+        : `<p class="msg">Ronda ${f.n} de la final</p><p>Turno de <b>${esc(nombreDe(f.cur))}</b></p><p>Banco: <b>${f.banco}</b></p>`;
+    } else {
+      c = `<p class="msg">Fin de la ronda ${f.n}</p><p>Pronto se abre la votación…</p>`;
+    }
+    const etiqueta = sigo ? '<p class="tag" style="background:#ef4444">Estás en la final</p>'
+      : soyFinalista ? '<p class="tag" style="background:#334155">Quedaste fuera de la final</p>' : '';
+    app.innerHTML = cab + etiqueta + `<div class="card">${c}</div>`;
+    app.querySelectorAll('[data-v]').forEach(b => b.onclick = () => {
+      miVoto = b.dataset.v; sock.emit('votar', { id, cand: miVoto }); pintar();
+    });
+    return;
   }
-  app.innerHTML = cab + cuerpo +
-    `<p><button id="cambiar" style="background:none;border:0;color:#94a3b8;text-decoration:underline;font:inherit">Cambiar de equipo</button></p>`;
+
+  /* ---- Eliminado en rondas 1 o 2 ---- */
+  if (yo && yo.fuera) {
+    app.innerHTML = cab + `<div class="card"><p class="big">Quedaste fuera 😅</p>
+      <p>Quédate conectado: en la final vas a poder votar por el rival más débil.</p></div>`;
+    return;
+  }
+  if (st.fase === 'final') {
+    app.innerHTML = cab + `<div class="card"><p class="big">🎤 ¡Pasaste a la final!</p><p>Pasa al frente.</p></div>`;
+    return;
+  }
+
+  /* ---- Rondas 1 y 2 ---- */
+  let cuerpo = `<p class="tag" style="background:#334155">Ronda ${st.ronda} · ${st.ronda === 1 ? 'por equipos' : 'individual'}</p>`;
+  if (st.fase === 'espera') cuerpo += `<p class="msg">Espera la siguiente pregunta…</p>`;
+  else if (st.fase === 'abierta') {
+    const bloq = st.ronda === 1 ? st.bloqueados.includes(yo ? yo.eq : eq) : st.bloqueados.includes(id);
+    cuerpo += `<p class="q">${esc(st.pregunta)}</p>
+      <button class="buzz" id="buzz" style="background:${miEq.color}" ${bloq ? 'disabled' : ''}>${bloq ? 'Bloqueado' : '¡YA!'}</button>
+      ${bloq ? `<p class="msg">${st.ronda === 1 ? 'Tu equipo falló' : 'Fallaste'} esta pregunta</p>` : ''}`;
+  } else if (st.fase === 'turno') {
+    const t = st.turno, yoGane = t.id === id;
+    cuerpo += `<p class="q">${esc(st.pregunta)}</p><p class="big" style="color:${st.equipos[t.eq].color}">
+      ${yoGane ? '¡Contestas tú! 🎤' : 'Contesta ' + esc(t.nombre)}</p><p>${esc(st.equipos[t.eq].nombre)}</p>`;
+  } else if (st.fase === 'revelada') {
+    cuerpo += `<p class="q">${esc(st.pregunta)}</p><p class="msg">Respuesta: ${esc(st.respuesta || '')}</p>`;
+  }
+  const puedeCambiar = st.ronda === 1 && st.qi < 0;
+  app.innerHTML = cab + cuerpo + (puedeCambiar ? `<p><button class="link" id="cambiar">Cambiar de equipo</button></p>` : '');
   const b = document.getElementById('buzz');
   if (b) b.onclick = () => { if (navigator.vibrate) navigator.vibrate(80); sock.emit('presionar', { id }); };
-  document.getElementById('cambiar').onclick = () => { eq = null; localStorage.removeItem('rmd-eq'); pintar(); };
+  const c = document.getElementById('cambiar');
+  if (c) c.onclick = () => { eq = null; localStorage.removeItem('rmd-eq'); pintar(); };
 }
 </script></body></html>
