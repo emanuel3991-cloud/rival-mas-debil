@@ -1,81 +1,109 @@
 <!doctype html>
 <html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>El Rival Más Débil</title>
+<title>Conductor · El Rival Más Débil</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;900&display=swap">
 <style>
   *{box-sizing:border-box}
-  body{margin:0;min-height:100vh;font-family:Montserrat,system-ui,sans-serif;color:#f1f5f9;text-align:center;
-    background:radial-gradient(circle at 50% 0%,#1e3a8a 0%,#0b1120 70%);padding:24px 18px}
-  .logo{max-height:70px;margin:0 auto 6px;display:block}
-  h1{margin:0 0 22px;font-weight:900;font-size:1.7rem;letter-spacing:.02em}
+  body{margin:0;min-height:100vh;font-family:Montserrat,system-ui,sans-serif;color:#f1f5f9;
+    background:radial-gradient(circle at 50% 0%,#1e3a8a 0%,#0b1120 70%);padding:24px 32px}
+  header{display:flex;align-items:center;gap:16px;margin-bottom:22px}
+  .logo{max-height:64px}
+  h1{margin:0;font-weight:900;font-size:2.4rem}
   h1 span{color:#ef4444}
-  input{width:100%;font:inherit;font-size:1.2rem;padding:16px;border-radius:14px;border:2px solid #334155;background:#0f172a;color:#fff;margin-bottom:14px}
-  .eqs{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  .eqs button{font:inherit;font-weight:700;font-size:1.05rem;padding:20px 8px;border-radius:14px;border:0;color:#fff;cursor:pointer}
-  .card{background:rgba(15,23,42,.8);border:1px solid #334155;border-radius:18px;padding:18px;margin-bottom:18px}
-  .tag{display:inline-block;padding:6px 14px;border-radius:999px;font-weight:700}
-  .buzz{width:min(78vw,320px);aspect-ratio:1;border-radius:50%;border:0;margin:20px auto;display:block;font:inherit;
-    font-weight:900;font-size:2.4rem;color:#fff;cursor:pointer;box-shadow:0 12px 0 rgba(0,0,0,.35),0 0 40px rgba(239,68,68,.45)}
-  .buzz:active{transform:translateY(8px);box-shadow:0 4px 0 rgba(0,0,0,.35)}
-  .buzz:disabled{filter:grayscale(1);opacity:.35;box-shadow:none}
-  .msg{font-size:1.25rem;font-weight:700}
-  .q{font-size:1.15rem;font-weight:700;line-height:1.35}
+  .grid{display:grid;grid-template-columns:260px 1fr;gap:24px;align-items:start}
+  .card{background:rgba(15,23,42,.85);border:1px solid #334155;border-radius:20px;padding:20px}
+  .qr{text-align:center}
+  .qr img{width:220px;height:220px;background:#fff;padding:10px;border-radius:14px}
+  .qr p{margin:8px 0 0;font-size:.85rem;color:#94a3b8;word-break:break-all}
+  .num{color:#94a3b8;font-weight:700;letter-spacing:.1em;text-transform:uppercase;font-size:.9rem}
+  .q{font-size:2.6rem;font-weight:900;line-height:1.15;margin:10px 0 18px}
+  .estado{font-size:2rem;font-weight:900;padding:22px;border-radius:16px;text-align:center}
+  .equipos{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:22px}
+  .eq{border-radius:18px;padding:16px;text-align:center;border:4px solid transparent;transition:transform .2s}
+  .eq.gana{transform:scale(1.06);border-color:#fff;box-shadow:0 0 40px rgba(255,255,255,.35)}
+  .eq.bloq{opacity:.3}
+  .eq b{display:block;font-size:2.8rem;font-weight:900}
+  .eq small{opacity:.85}
+  .ctrl{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+  .ctrl button{font:inherit;font-weight:700;font-size:1.05rem;padding:14px 22px;border-radius:12px;border:0;cursor:pointer}
+  #login{display:flex;gap:10px}
+  #login input{font:inherit;font-size:1.1rem;padding:12px;border-radius:10px;border:2px solid #334155;background:#0f172a;color:#fff}
+  #login button{font:inherit;font-weight:700;padding:12px 20px;border-radius:10px;border:0;cursor:pointer}
+  @keyframes pop{0%{transform:scale(.6);opacity:0}100%{transform:none;opacity:1}}
+  .pop{animation:pop .35s ease-out}
 </style></head><body>
-<img class="logo" src="/logo.png" alt="" onerror="this.remove()">
-<h1>El Rival <span>Más Débil</span></h1>
-<div id="app"></div>
+<header><img class="logo" src="/logo.png" alt="" onerror="this.remove()"><h1>El Rival <span>Más Débil</span></h1></header>
+<div id="login"><input id="clave" type="password" placeholder="Contraseña"><button id="entrar">Entrar</button></div>
+<div id="app" hidden></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
 const sock = io();
-let id = localStorage.getItem('rmd-id');
-if (!id) { id = Math.random().toString(36).slice(2); localStorage.setItem('rmd-id', id); }
-let nombre = localStorage.getItem('rmd-nombre') || '';
-let eq = localStorage.getItem('rmd-eq'); eq = eq === null ? null : +eq;
-let st = null;
+let clave = '', st = null, ultimoTurno = null;
 const app = document.getElementById('app');
 const esc = t => String(t).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const unirse = () => sock.emit('unirse', { id, nombre, eq });
+const enviar = acc => sock.emit('host', { clave, acc });
 
-sock.on('connect', () => { if (nombre && eq !== null) unirse(); });
-sock.on('estado', e => { st = e; pintar(); });
+document.getElementById('entrar').onclick = () => { clave = document.getElementById('clave').value; enviar('nada'); };
+sock.on('clave', ok => {
+  if (ok) { document.getElementById('login').hidden = true; app.hidden = false; pintar(); }
+  else alert('Contraseña incorrecta');
+});
+sock.on('estado', e => {
+  const nuevoTurno = e.turno && (!st || !st.turno);
+  st = e; if (!app.hidden) pintar();
+  if (nuevoTurno) timbre();
+});
+
+let actx;
+function timbre() {
+  try {
+    actx = actx || new AudioContext();
+    [880, 1320].forEach((f, k) => {
+      const o = actx.createOscillator(), g = actx.createGain(), t = actx.currentTime + k * .12;
+      o.frequency.value = f; o.type = 'triangle';
+      g.gain.setValueAtTime(.2, t); g.gain.exponentialRampToValueAtTime(.001, t + .4);
+      o.connect(g).connect(actx.destination); o.start(t); o.stop(t + .4);
+    });
+  } catch (e) {}
+}
 
 function pintar() {
   if (!st) return;
-  if (!nombre || eq === null) {
-    app.innerHTML = `<div class="card"><input id="n" maxlength="20" placeholder="Tu nombre" value="${esc(nombre)}">
-      <p style="margin:0 0 12px">Elige tu equipo</p>
-      <div class="eqs">${st.equipos.map((e, i) => `<button data-e="${i}" style="background:${e.color}">${esc(e.nombre)}</button>`).join('')}</div></div>`;
-    app.querySelectorAll('[data-e]').forEach(b => b.onclick = () => {
-      const v = document.getElementById('n').value.trim();
-      if (!v) { document.getElementById('n').focus(); return; }
-      nombre = v; eq = +b.dataset.e;
-      localStorage.setItem('rmd-nombre', nombre); localStorage.setItem('rmd-eq', eq);
-      unirse(); pintar();
-    });
-    return;
+  const url = location.origin;
+  const qr = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(url)}`;
+  let centro = '<p class="q">Escaneen el QR y elijan su equipo</p>';
+  if (st.qi >= 0) {
+    let est = '';
+    if (st.fase === 'abierta') est = `<div class="estado" style="background:#1e293b">¡Presionen ya!</div>`;
+    if (st.fase === 'turno') {
+      const e = st.equipos[st.turno.eq];
+      est = `<div class="estado pop" style="background:${e.color}">Contesta ${esc(e.nombre)} · ${esc(st.turno.nombre)}</div>`;
+    }
+    if (st.fase === 'revelada') est = `<div class="estado" style="background:#065f46">Respuesta: ${esc(st.respuesta || '')}</div>`;
+    centro = `<div class="num">Pregunta ${st.qi + 1} de ${st.total}</div><div class="q">${esc(st.pregunta)}</div>${est}`;
   }
-  const mio = st.equipos[eq];
-  const cab = `<div class="card"><span class="tag" style="background:${mio.color}">${esc(mio.nombre)}</span>
-    <p style="margin:10px 0 0">${esc(nombre)} · <b>${mio.pts}</b> puntos</p></div>`;
-  let cuerpo = '';
-  if (st.fase === 'espera') cuerpo = `<p class="msg">Espera la primera pregunta…</p>`;
-  else if (st.fase === 'abierta') {
-    const bloq = st.bloqueados.includes(eq);
-    cuerpo = `<p class="q">${esc(st.pregunta)}</p>
-      <button class="buzz" id="buzz" style="background:${mio.color}" ${bloq ? 'disabled' : ''}>${bloq ? 'Bloqueado' : '¡YA!'}</button>
-      ${bloq ? '<p class="msg">Tu equipo falló esta pregunta</p>' : ''}`;
-  } else if (st.fase === 'turno') {
-    const t = st.turno, gane = t.eq === eq;
-    cuerpo = `<p class="q">${esc(st.pregunta)}</p><p class="msg" style="font-size:1.6rem;color:${st.equipos[t.eq].color}">
-      ${gane ? '¡Ganó tu equipo! 🎤' : 'Contesta ' + esc(st.equipos[t.eq].nombre)}</p><p>${esc(t.nombre)} presionó primero</p>`;
-  } else if (st.fase === 'revelada') {
-    cuerpo = `<p class="q">${esc(st.pregunta)}</p><p class="msg">Respuesta: ${esc(st.respuesta || '')}</p>`;
-  }
-  app.innerHTML = cab + cuerpo +
-    `<p><button id="cambiar" style="background:none;border:0;color:#94a3b8;text-decoration:underline;font:inherit">Cambiar de equipo</button></p>`;
-  const b = document.getElementById('buzz');
-  if (b) b.onclick = () => { if (navigator.vibrate) navigator.vibrate(80); sock.emit('presionar', { id }); };
-  document.getElementById('cambiar').onclick = () => { eq = null; localStorage.removeItem('rmd-eq'); pintar(); };
+  const equipos = st.equipos.map((e, i) => {
+    const gana = st.turno && st.turno.eq === i, bloq = st.bloqueados.includes(i);
+    return `<div class="eq ${gana ? 'gana' : ''} ${bloq ? 'bloq' : ''}" style="background:${e.color}">
+      <div>${esc(e.nombre)}</div><b>${e.pts}</b><small>${st.conteo[i]} jugadores</small></div>`;
+  }).join('');
+  const t = st.fase === 'turno';
+  app.innerHTML = `<div class="grid">
+      <div class="card qr"><img src="${qr}" alt="Código QR"><p>${esc(url)}</p></div>
+      <div class="card">${centro}</div>
+    </div>
+    <div class="equipos">${equipos}</div>
+    <div class="ctrl">
+      <button data-a="siguiente" style="background:#f1f5f9;color:#0b1120">Siguiente pregunta ▶</button>
+      <button data-a="correcta" style="background:#22c55e;color:#04210f" ${t ? '' : 'disabled'}>✓ Correcta</button>
+      <button data-a="incorrecta" style="background:#ef4444;color:#fff" ${t ? '' : 'disabled'}>✕ Incorrecta</button>
+      <button data-a="revelar" style="background:#334155;color:#fff">Mostrar respuesta</button>
+      <button data-a="reiniciar" style="background:transparent;color:#94a3b8;border:2px solid #334155">Reiniciar todo</button>
+    </div>`;
+  app.querySelectorAll('[data-a]').forEach(b => b.onclick = () => {
+    if (b.dataset.a === 'reiniciar' && !confirm('¿Borrar puntos y empezar de cero?')) return;
+    enviar(b.dataset.a);
+  });
 }
 </script></body></html>
